@@ -1,9 +1,15 @@
 # openrouter-admin-mcp
 
-[![npm version](https://img.shields.io/npm/v/openrouter-admin-mcp.svg)](https://www.npmjs.com/package/openrouter-admin-mcp)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/openrouter-admin-mcp?color=cb3837&logo=npm&label=npm)](https://www.npmjs.com/package/openrouter-admin-mcp)
+[![npm downloads](https://img.shields.io/npm/dw/openrouter-admin-mcp?color=cb3837&logo=npm&label=downloads)](https://www.npmjs.com/package/openrouter-admin-mcp)
+[![CI](https://img.shields.io/github/actions/workflow/status/oviron/openrouter-admin-mcp/test.yml?branch=main&logo=github&label=ci)](https://github.com/oviron/openrouter-admin-mcp/actions/workflows/test.yml)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-7C3AED?logo=anthropic)](https://registry.modelcontextprotocol.io/v0/servers/io.github.oviron%2Fopenrouter-admin)
+[![Node](https://img.shields.io/node/v/openrouter-admin-mcp?logo=node.js)](https://nodejs.org)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-MCP server for the **OpenRouter management API** — programmatic control of credits, inference keys, and usage analytics from inside Claude Code, Claude Desktop, or any MCP-compatible client.
+MCP server for the **OpenRouter management API** — programmatic control of credits, inference keys, and usage analytics from inside Claude Code, Claude Desktop, Cursor, or any MCP-compatible client.
+
+> Read-only by default. Destructive write operations are gated behind an opt-in env flag.
 
 This is **not** an inference proxy. It uses an OpenRouter [Provisioning API key](https://openrouter.ai/settings/provisioning), which can manage your account but cannot make completion calls.
 
@@ -21,13 +27,20 @@ OpenRouter's UI is solid for one-off tweaks, but checking spend across keys, dri
 
 ## Install
 
+### One-click
+
+[![Install in VS Code](https://img.shields.io/badge/Install-VS_Code-007ACC?logo=visualstudiocode)](https://insiders.vscode.dev/redirect/mcp/install?name=openrouter-admin&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22openrouter-admin-mcp%22%5D%2C%22env%22%3A%7B%22OPENROUTER_PROVISIONING_KEY%22%3A%22sk-or-v1-...%22%7D%7D)
+[![Install in Cursor](https://img.shields.io/badge/Install-Cursor-000000?logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIuOTk5MyAyTDIxIDdWMTdMMTIuOTk5MyAyMkwxMyAxNi41TDE3IDE0LjI1VjkuNzVMMTMgN1YyWiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=)](https://cursor.com/install-mcp?name=openrouter-admin&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIm9wZW5yb3V0ZXItYWRtaW4tbWNwIl0sImVudiI6eyJPUEVOUk9VVEVSX1BST1ZJU0lPTklOR19LRVkiOiJzay1vci12MS0uLi4ifX0=)
+
+> Replace the placeholder `sk-or-v1-...` with your real key after install.
+
+### Manual
+
+Run via `npx` (no install needed) or install globally:
+
 ```bash
 npx -y openrouter-admin-mcp
-```
-
-Or globally:
-
-```bash
+# or
 npm install -g openrouter-admin-mcp
 ```
 
