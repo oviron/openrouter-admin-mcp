@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>openrouter-admin-mcp</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #7c5cff;
+    --tool: #2f6feb;
+    --good: #3fb950;
+    --bad: #f85149;
+    --code-bg: #1c2128;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); }
+  body {
+    font-family: -apple-system, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    width: 1200px;
+    height: 630px;
+    padding: 56px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    -webkit-font-smoothing: antialiased;
+    background: radial-gradient(ellipse at top right, rgba(124,92,255,0.18), transparent 50%),
+                radial-gradient(ellipse at bottom left, rgba(47,111,235,0.12), transparent 60%),
+                var(--bg);
+  }
+  .top { display: flex; align-items: center; gap: 18px; }
+  .logo {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, #7c5cff, #2f6feb);
+    border-radius: 14px;
+    display: grid; place-items: center;
+    font-size: 32px; font-weight: 700;
+    box-shadow: 0 6px 24px rgba(124,92,255,0.35);
+  }
+  h1 {
+    margin: 0;
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .pitch {
+    margin-top: 16px;
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1.25;
+    color: #c9d1d9;
+    max-width: 950px;
+  }
+  .pitch .hl { color: var(--bad); font-weight: 700; }
+  .pitch .hl-good { color: var(--good); font-weight: 700; }
+  .features {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .feat {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    font-size: 17px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .feat .icon { color: var(--accent); font-weight: 700; }
+  .bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+  .install {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 22px;
+    color: var(--text);
+    background: var(--code-bg);
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .install .prompt { color: var(--muted); margin-right: 8px; }
+  .install .cmd { color: #79c0ff; }
+  .meta {
+    display: flex; gap: 18px; align-items: center;
+    color: var(--muted); font-size: 17px;
+  }
+  .meta .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 8px;
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--text); font-weight: 600; font-size: 15px;
+  }
+  .meta .badge.npm { color: #cb3837; }
+  .meta .badge.mcp { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div>
+  <div class="top">
+    <div class="logo">⚡</div>
+    <h1>openrouter-admin-mcp</h1>
+  </div>
+
+  <div class="pitch">
+    Catch a <span class="hl">$20/day</span> OpenRouter cost burn before your invoice does.
+    <br>Cap any key in <span class="hl-good">one tool call</span> — without leaving Claude.
+  </div>
+
+  <div class="features">
+    <span class="feat"><span class="icon">▸</span> daily / weekly / monthly limit reset</span>
+    <span class="feat"><span class="icon">▸</span> per-model spend drill-down</span>
+    <span class="feat"><span class="icon">▸</span> read-only by default</span>
+    <span class="feat"><span class="icon">▸</span> one-shot dashboard</span>
+  </div>
+</div>
+
+<div class="bottom">
+  <div class="install">
+    <span class="prompt">$</span><span class="cmd">npx -y openrouter-admin-mcp</span>
+  </div>
+  <div class="meta">
+    <span class="badge npm">npm v0.3.0</span>
+    <span class="badge mcp">in MCP Registry</span>
+  </div>
+</div>
+
+</body>
+</html>

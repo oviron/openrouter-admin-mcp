@@ -9,6 +9,8 @@
 
 MCP server for the **OpenRouter management API** — programmatic control of credits, inference keys, and usage analytics from inside Claude Code, Claude Desktop, Cursor, or any MCP-compatible client.
 
+![demo](assets/hero.png)
+
 > Read-only by default. Destructive write operations are gated behind an opt-in env flag.
 
 This is **not** an inference proxy. It uses an OpenRouter [Provisioning API key](https://openrouter.ai/settings/provisioning), which can manage your account but cannot make completion calls.
