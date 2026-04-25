@@ -1,11 +1,18 @@
 {
   "name": "openrouter-admin-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "bin": { "openrouter-admin-mcp": "./build/index.js" },
-  "files": ["build", "README.md"],
+  "bin": {
+    "openrouter-admin-mcp": "./build/index.js"
+  },
+  "files": [
+    "build",
+    "README.md"
+  ],
   "main": "build/index.js",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",

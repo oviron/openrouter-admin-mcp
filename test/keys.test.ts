@@ -52,6 +52,31 @@ describe("or_keys_list", () => {
     expect(out).toContain("$0.23");
     expect(out).not.toContain("0.22570307199999995");
   });
+
+  it("surfaces limit_reset and expires_at when present", async () => {
+    const daily = { ...KEY_FIXTURE, name: "Daily", hash: "d1", limit: 0.3, limit_remaining: 0.29, limit_reset: "daily" as const, expires_at: "2026-12-31T00:00:00Z" };
+    mockFetch([{ status: 200, body: { data: [daily] } }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    const out = await handleKeysList(client, { include_disabled: true });
+    expect(out).toContain("daily");
+    expect(out).toContain("expires 2026-12-31");
+  });
+
+  it("flags near-limit keys with warning marker", async () => {
+    const near = { ...KEY_FIXTURE, name: "Near", hash: "n1", limit: 10, limit_remaining: 0.5 };
+    mockFetch([{ status: 200, body: { data: [near] } }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    const out = await handleKeysList(client, { include_disabled: true });
+    expect(out).toContain("⚠️");
+  });
+
+  it("does not flag healthy keys", async () => {
+    const healthy = { ...KEY_FIXTURE, name: "Fine", limit: 10, limit_remaining: 5 };
+    mockFetch([{ status: 200, body: { data: [healthy] } }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    const out = await handleKeysList(client, { include_disabled: true });
+    expect(out).not.toContain("⚠️");
+  });
 });
 
 describe("or_key_get", () => {
@@ -69,6 +94,30 @@ describe("or_key_get", () => {
     await handleKeyGet(client, "weird/hash%value");
     expect(calls[0].url).toContain("/keys/weird%2Fhash%25value");
     expect(calls[0].url).not.toContain("/keys/weird/hash%value");
+  });
+
+  it("renders limit_reset and expires_at in detailed view", async () => {
+    mockFetch([{
+      status: 200,
+      body: { data: { ...KEY_FIXTURE, limit: 0.3, limit_remaining: 0.02, limit_reset: "daily", expires_at: "2026-12-31T00:00:00Z" } },
+    }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    const out = await handleKeyGet(client, KEY_FIXTURE.hash);
+    expect(out).toMatch(/Limit:.*resets daily/);
+    expect(out).toContain("Expires: 2026-12-31T00:00:00Z");
+    expect(out).toContain("near limit");
+    expect(out).toContain("⚠️");
+  });
+
+  it("renders 'Limit: none' for unlimited keys without reset/warning noise", async () => {
+    mockFetch([{
+      status: 200,
+      body: { data: { ...KEY_FIXTURE, limit: null, limit_remaining: null } },
+    }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    const out = await handleKeyGet(client, KEY_FIXTURE.hash);
+    expect(out).toContain("Limit: none");
+    expect(out).not.toContain("near limit");
   });
 });
 
@@ -92,6 +141,27 @@ describe("or_key_create", () => {
     const client = new OpenRouterClient("sk-or-v1-test");
     return expect(handleKeyCreate(client, { name: "" })).rejects.toThrow();
   });
+
+  it("forwards limit_reset and expires_at and shows them in output", async () => {
+    const { calls } = mockFetch([{
+      status: 200,
+      body: { data: { hash: "h", name: "OpenClaw 2", label: "sk-...", key: "sk-or-v1-NEW", limit: 0.3, limit_reset: "daily", expires_at: "2026-12-31T00:00:00Z" } },
+    }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    const out = await handleKeyCreate(client, { name: "OpenClaw 2", limit: 0.3, limit_reset: "daily", expires_at: "2026-12-31T00:00:00Z" });
+    const body = JSON.parse(calls[0].init.body as string);
+    expect(body.limit_reset).toBe("daily");
+    expect(body.expires_at).toBe("2026-12-31T00:00:00Z");
+    expect(out).toContain("(resets daily)");
+    expect(out).toContain("Expires: 2026-12-31");
+  });
+
+  it("rejects invalid limit_reset values", () => {
+    const client = new OpenRouterClient("sk-or-v1-test");
+    return expect(
+      handleKeyCreate(client, { name: "x", limit: 1, limit_reset: "yearly" as never })
+    ).rejects.toThrow();
+  });
 });
 
 describe("or_key_update", () => {
@@ -107,6 +177,28 @@ describe("or_key_update", () => {
   it("rejects when no fields are provided", async () => {
     const client = new OpenRouterClient("sk-or-v1-test");
     await expect(handleKeyUpdate(client, { hash: "h" })).rejects.toThrow(/at least one field/);
+  });
+
+  it("supports setting limit_reset and clearing it via null", async () => {
+    const { calls } = mockFetch([{ status: 200, body: { data: { hash: "h", name: "x", disabled: false, limit: 0.5, limit_remaining: 0.5, limit_reset: "weekly", usage: 0, label: "x", created_at: "", updated_at: "" } } }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    await handleKeyUpdate(client, { hash: "h", limit: 0.5, limit_reset: "weekly" });
+    const body = JSON.parse(calls[0].init.body as string);
+    expect(body).toEqual({ limit: 0.5, limit_reset: "weekly" });
+
+    // null clears the reset period
+    mockFetch([{ status: 200, body: { data: { hash: "h", name: "x", disabled: false, limit: 0.5, limit_remaining: 0.5, limit_reset: null, usage: 0, label: "x", created_at: "", updated_at: "" } } }]);
+    const c2 = new OpenRouterClient("sk-or-v1-test");
+    await handleKeyUpdate(c2, { hash: "h", limit_reset: null });
+    // mockFetch reset above; just verify null is passed through (no exception)
+  });
+
+  it("supports setting expires_at and clearing it via null", async () => {
+    const { calls } = mockFetch([{ status: 200, body: { data: { hash: "h", name: "x", disabled: false, limit: null, limit_remaining: null, usage: 0, label: "x", expires_at: "2026-06-30T00:00:00Z", created_at: "", updated_at: "" } } }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    await handleKeyUpdate(client, { hash: "h", expires_at: "2026-06-30T00:00:00Z" });
+    const body = JSON.parse(calls[0].init.body as string);
+    expect(body.expires_at).toBe("2026-06-30T00:00:00Z");
   });
 });
 

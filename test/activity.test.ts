@@ -99,4 +99,24 @@ describe("or_activity", () => {
     // 60 rows, limit 5, expect "55 more rows"
     expect(out).toContain("55 more rows");
   });
+
+  it("aggregates by api_key_hash when requested", async () => {
+    mockFetch([{
+      status: 200,
+      body: {
+        data: [
+          { date: "2026-04-25", model: "haiku", api_key_hash: "k_alpha", usage: 0.5, requests: 3 },
+          { date: "2026-04-25", model: "haiku", api_key_hash: "k_alpha", usage: 0.3, requests: 2 },
+          { date: "2026-04-25", model: "grok",  api_key_hash: "k_beta",  usage: 0.1, requests: 5 },
+        ],
+      },
+    }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    const out = await handleActivity(client, { aggregate: "by_key" });
+    expect(out).toContain("By api_key_hash");
+    const alpha = out.split("\n").find((l) => l.includes("k_alpha"))!;
+    expect(alpha).toContain("$0.8000");
+    expect(alpha).toContain("5 req");
+    expect(alpha).toContain("2 rows");
+  });
 });
