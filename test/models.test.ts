@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { OpenRouterClient } from "../src/client.js";
-import { handleModel, handleModels } from "../src/tools/models.js";
+import {
+  handleModel,
+  handleModelEndpoints,
+  handleModels,
+  handleModelsUser,
+  handleZdrEndpoints,
+} from "../src/tools/models.js";
 import { mockFetch } from "./helpers.js";
 
 const KEY = "sk-or-v1-test";
@@ -79,5 +85,104 @@ describe("or_model_get", () => {
     const client = new OpenRouterClient(KEY, { maxRetries: 0 });
     const out = await handleModel(client, "no/such-model");
     expect(out).toContain("not found");
+  });
+});
+
+describe("or_model_endpoints", () => {
+  it("lists provider endpoints with uptime + pricing", async () => {
+    const { calls } = mockFetch([
+      {
+        status: 200,
+        body: {
+          data: {
+            id: "anthropic/claude-opus-4.7",
+            endpoints: [
+              {
+                provider_name: "Anthropic",
+                tag: "official",
+                context_length: 200_000,
+                pricing: { prompt: "0.000015", completion: "0.000075" },
+                uptime_last_30m: 0.997,
+                status: 200,
+              },
+              {
+                provider_name: "AWS Bedrock",
+                quantization: null,
+                context_length: 200_000,
+                pricing: { prompt: "0.000018", completion: "0.0001" },
+                uptime_last_30m: 0.985,
+              },
+            ],
+          },
+        },
+      },
+    ]);
+    const c = new OpenRouterClient(KEY, { maxRetries: 0, cache: false });
+    const out = await handleModelEndpoints(c, "anthropic", "claude-opus-4.7");
+    expect(calls[0].url).toBe(
+      "https://openrouter.ai/api/v1/models/anthropic/claude-opus-4.7/endpoints",
+    );
+    expect(out).toContain("Anthropic");
+    expect(out).toContain("tag: official");
+    expect(out).toContain("uptime 99.7%");
+    expect(out).toContain("AWS Bedrock");
+    expect(out).toContain("uptime 98.5%");
+  });
+
+  it("returns 'No endpoints' when array is empty", async () => {
+    mockFetch([{ status: 200, body: { data: { id: "x/y", endpoints: [] } } }]);
+    const c = new OpenRouterClient(KEY, { maxRetries: 0, cache: false });
+    const out = await handleModelEndpoints(c, "x", "y");
+    expect(out).toContain("No endpoints for x/y");
+  });
+});
+
+describe("or_models_user", () => {
+  it("lists models filtered by account settings", async () => {
+    const { calls } = mockFetch([{ status: 200, body: { data: SAMPLE } }]);
+    const c = new OpenRouterClient(KEY, { maxRetries: 0, cache: false });
+    const out = await handleModelsUser(c);
+    expect(calls[0].url).toBe("https://openrouter.ai/api/v1/models/user");
+    expect(out).toContain("Models available to this account (2)");
+    expect(out).toContain("anthropic/claude-opus-4.7");
+  });
+
+  it("handles empty result", async () => {
+    mockFetch([{ status: 200, body: { data: [] } }]);
+    const c = new OpenRouterClient(KEY, { maxRetries: 0, cache: false });
+    const out = await handleModelsUser(c);
+    expect(out).toContain("No models available");
+  });
+});
+
+describe("or_zdr_endpoints", () => {
+  it("lists ZDR-compliant models with endpoint counts", async () => {
+    const { calls } = mockFetch([
+      {
+        status: 200,
+        body: {
+          data: [
+            { id: "anthropic/claude-opus-4.7", endpoints: [{ provider_name: "Anthropic" }] },
+            {
+              id: "openai/gpt-5.1",
+              endpoints: [{ provider_name: "OpenAI" }, { provider_name: "Azure" }],
+            },
+          ],
+        },
+      },
+    ]);
+    const c = new OpenRouterClient(KEY, { maxRetries: 0, cache: false });
+    const out = await handleZdrEndpoints(c);
+    expect(calls[0].url).toBe("https://openrouter.ai/api/v1/endpoints/zdr");
+    expect(out).toContain("ZDR endpoints (2 models)");
+    expect(out).toContain("anthropic/claude-opus-4.7** — 1 endpoint(s)");
+    expect(out).toContain("openai/gpt-5.1** — 2 endpoint(s)");
+  });
+
+  it("handles empty list", async () => {
+    mockFetch([{ status: 200, body: { data: [] } }]);
+    const c = new OpenRouterClient(KEY, { maxRetries: 0, cache: false });
+    const out = await handleZdrEndpoints(c);
+    expect(out).toBe("No ZDR-compliant endpoints.");
   });
 });
