@@ -12,6 +12,7 @@ interface ActivityRow {
   model_permaslug?: string;
   endpoint_id?: string;
   provider_name?: string;
+  api_key_hash?: string;
   usage?: number;
   byok_usage_inference?: number;
   requests?: number;
@@ -75,7 +76,7 @@ function aggregateBy(
   return Array.from(map.values()).sort((a, b) => b.usage - a.usage);
 }
 
-export type AggregateMode = "none" | "by_model" | "by_day" | "by_provider";
+export type AggregateMode = "none" | "by_model" | "by_day" | "by_provider" | "by_key";
 
 export async function handleActivity(
   client: OpenRouterClient,
@@ -134,6 +135,17 @@ export async function handleActivity(
     return `${header}\nBy provider (top ${Math.min(limit, agg.length)}):\n${lines.join("\n")}`;
   }
 
+  if (mode === "by_key") {
+    const agg = aggregateBy(data, (r) => r.api_key_hash ?? "(unknown)");
+    const lines = agg
+      .slice(0, limit)
+      .map(
+        (a) =>
+          `- ${a.key.padEnd(64)} ${money(a.usage)} | ${a.requests} req | ${a.rows} rows`
+      );
+    return `${header}\nBy api_key_hash (top ${Math.min(limit, agg.length)}):\n${lines.join("\n")}`;
+  }
+
   // none — detailed rows, sorted by usage desc, capped
   const sorted = [...data].sort((a, b) => (b.usage ?? 0) - (a.usage ?? 0));
   const shown = sorted.slice(0, limit);
@@ -157,10 +169,10 @@ export function registerActivityTools(server: McpServer, client: OpenRouterClien
         .optional()
         .describe("Org member user_id (org accounts only)"),
       aggregate: z
-        .enum(["none", "by_model", "by_day", "by_provider"])
+        .enum(["none", "by_model", "by_day", "by_provider", "by_key"])
         .optional()
         .describe(
-          "Aggregation: none=raw rows sorted by usage; by_model/by_day/by_provider=grouped totals"
+          "Aggregation: none=raw rows sorted by usage; by_model/by_day/by_provider/by_key=grouped totals"
         ),
       limit: z
         .number()

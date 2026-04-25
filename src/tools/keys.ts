@@ -9,10 +9,12 @@ interface KeyEntry {
   disabled: boolean;
   limit: number | null;
   limit_remaining: number | null;
+  limit_reset?: "daily" | "weekly" | "monthly" | null;
   usage: number;
   usage_daily?: number;
   usage_weekly?: number;
   usage_monthly?: number;
+  expires_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,11 +26,19 @@ const money = (n: number | null | undefined): string =>
 
 function fmtKey(k: KeyEntry): string {
   const status = k.disabled ? " (disabled)" : "";
-  const lim =
-    k.limit !== null
-      ? `limit ${money(k.limit)}, remaining ${money(k.limit_remaining)}`
-      : "no limit";
-  return `- **${k.name}**${status} | usage ${money(k.usage)} | ${lim} | hash: \`${k.hash}\` | label: ${k.label}`;
+  let lim: string;
+  if (k.limit !== null) {
+    const reset = k.limit_reset ? ` ${k.limit_reset}` : "";
+    lim = `limit ${money(k.limit)}${reset}, remaining ${money(k.limit_remaining)}`;
+    // ⚠️ near-limit warning when remaining <10% of limit
+    if (k.limit > 0 && k.limit_remaining !== null && k.limit_remaining < k.limit * 0.1) {
+      lim += " ⚠️";
+    }
+  } else {
+    lim = "no limit";
+  }
+  const exp = k.expires_at ? ` | expires ${k.expires_at.slice(0, 10)}` : "";
+  return `- **${k.name}**${status} | usage ${money(k.usage)} | ${lim}${exp} | hash: \`${k.hash}\` | label: ${k.label}`;
 }
 
 export async function handleKeysList(
@@ -45,21 +55,35 @@ export async function handleKeysList(
 
 export async function handleKeyGet(client: OpenRouterClient, hash: string): Promise<string> {
   const k = await client.request<KeyEntry>("GET", `/keys/${encodeURIComponent(hash)}`);
-  return [
+  const limitLine =
+    k.limit !== null
+      ? `Limit: ${money(k.limit)}${k.limit_reset ? ` (resets ${k.limit_reset})` : ""} (remaining: ${money(k.limit_remaining)})`
+      : "Limit: none";
+  const lines = [
     `Name: ${k.name}`,
     `Label: ${k.label}`,
     `Hash: ${k.hash}`,
     `Disabled: ${k.disabled}`,
-    `Limit: ${money(k.limit)} (remaining: ${money(k.limit_remaining)})`,
+    limitLine,
     `Usage: total=${money(k.usage)}, day=${money(k.usage_daily)}, week=${money(k.usage_weekly)}, month=${money(k.usage_monthly)}`,
-    `Created: ${k.created_at}`,
-    `Updated: ${k.updated_at}`,
-  ].join("\n");
+  ];
+  if (k.expires_at) lines.push(`Expires: ${k.expires_at}`);
+  // Near-limit warning in detailed view
+  if (k.limit !== null && k.limit > 0 && k.limit_remaining !== null && k.limit_remaining < k.limit * 0.1) {
+    lines.push(`⚠️  near limit: only ${money(k.limit_remaining)} remaining (${(100 * k.limit_remaining / k.limit).toFixed(1)}%)`);
+  }
+  lines.push(`Created: ${k.created_at}`);
+  lines.push(`Updated: ${k.updated_at}`);
+  return lines.join("\n");
 }
+
+const limitResetSchema = z.enum(["daily", "weekly", "monthly"]);
 
 const createSchema = z.object({
   name: z.string().min(1, "name is required"),
   limit: z.number().nonnegative().optional(),
+  limit_reset: limitResetSchema.optional(),
+  expires_at: z.string().optional(),
   include_byok_in_limit: z.boolean().optional(),
 });
 
@@ -74,7 +98,11 @@ export async function handleKeyCreate(
     `Hash: ${r.hash}`,
     `Label: ${r.label}`,
   ];
-  if (r.limit != null) lines.push(`Limit: $${r.limit}`);
+  if (r.limit != null) {
+    const reset = r.limit_reset ? ` (resets ${r.limit_reset})` : "";
+    lines.push(`Limit: $${r.limit}${reset}`);
+  }
+  if (r.expires_at) lines.push(`Expires: ${r.expires_at}`);
   if (r.key) {
     lines.push("");
     lines.push(`Secret: \`${r.key}\``);
@@ -88,6 +116,8 @@ const updateSchema = z.object({
   name: z.string().min(1).optional(),
   disabled: z.boolean().optional(),
   limit: z.number().nonnegative().nullable().optional(),
+  limit_reset: limitResetSchema.nullable().optional(),
+  expires_at: z.string().nullable().optional(),
   include_byok_in_limit: z.boolean().optional(),
 });
 
@@ -106,7 +136,11 @@ export async function handleKeyUpdate(
     `/keys/${encodeURIComponent(hash)}`,
     { body }
   );
-  return `Updated **${r.name}** (hash: ${r.hash}). Disabled: ${r.disabled}. Limit: ${r.limit ?? "none"}.`;
+  const limStr =
+    r.limit == null
+      ? "none"
+      : `${r.limit}${r.limit_reset ? ` (${r.limit_reset})` : ""}`;
+  return `Updated **${r.name}** (hash: ${r.hash}). Disabled: ${r.disabled}. Limit: ${limStr}.`;
 }
 
 export async function handleKeyDelete(client: OpenRouterClient, hash: string): Promise<string> {
@@ -139,18 +173,22 @@ export function registerKeysTools(server: McpServer, client: OpenRouterClient) {
     {
       name: z.string().min(1).describe("Human-readable key name"),
       limit: z.number().nonnegative().optional().describe("Spending limit in USD"),
+      limit_reset: limitResetSchema.optional().describe("Reset period for the limit: daily, weekly, monthly. Omit for cumulative-only limit."),
+      expires_at: z.string().optional().describe("ISO 8601 timestamp when the key expires (e.g., '2026-12-31T00:00:00Z'). Omit for no expiration."),
       include_byok_in_limit: z.boolean().optional().describe("Whether BYOK usage counts toward the limit"),
     },
     async (args) => ({ content: [{ type: "text" as const, text: await handleKeyCreate(client, args) }] })
   );
   server.tool(
     "or_key_update",
-    "Update an OpenRouter inference key (rename, disable, change limit). ⚠️ Destructive — confirm before running.",
+    "Update an OpenRouter inference key (rename, disable, change limit/reset/expiration). ⚠️ Destructive — confirm before running.",
     {
       hash: z.string().min(1).describe("Key hash"),
       name: z.string().min(1).optional(),
       disabled: z.boolean().optional(),
       limit: z.number().nonnegative().nullable().optional().describe("USD limit; null to clear"),
+      limit_reset: limitResetSchema.nullable().optional().describe("Reset period: daily/weekly/monthly; null to make limit cumulative again"),
+      expires_at: z.string().nullable().optional().describe("ISO 8601 expiration timestamp; null to remove expiration"),
       include_byok_in_limit: z.boolean().optional(),
     },
     async (args) => ({ content: [{ type: "text" as const, text: await handleKeyUpdate(client, args) }] })
