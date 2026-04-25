@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0 — 2026-04-25
+
+### Removed (design — interpretive logic out)
+- **Near-limit warnings (`⚠️`)** removed from `or_keys_list`, `or_key_get`, `or_overview` payloads. The agent has `limit` and `limit_remaining` and decides what's "near" — server should not interpret. Rationale: research into production MCP servers (Stripe, GitHub, Linear) — none embed interpretive flags in payloads. See `inbox/research/2026-04-25-mcp-server-best-practices.md`.
+
+### Added (plumbing)
+- **HTTP retry on 429 / 5xx** with exponential backoff (1s/2s/4s, capped 8s) and `Retry-After` header support (seconds or HTTP-date). Default 3 retries; configurable via `ClientOptions.maxRetries`. 4xx other than 429 are not retried.
+- **In-session GET cache** for `/credits`, `/key`, `/keys`, `/keys/{hash}`. Default 60s TTL. Mutations on `/keys/*` invalidate the list cache. Configurable via `ClientOptions.cache` and `cacheTtlMs`. Per-call `noCache: true` opt-out. `/activity` and `/generation` are never cached.
+
+### Tests
+- 45 → 53 unit tests. New coverage: retry behavior (429 with Retry-After, 5xx with backoff, max-retry exhaustion, no retry on 401), cache (TTL, exempt paths, `noCache` flag, write-invalidates-list, disable flag).
+
 ## 0.3.0 — 2026-04-25
 
 ### Security

@@ -81,7 +81,7 @@ describe("or_overview", () => {
     expect(out).toContain("no activity yet");
   });
 
-  it("flags near-limit key in overview", async () => {
+  it("renders raw key usage/limit without interpretive markers", async () => {
     mockFetch([
       { status: 200, body: { data: { total_credits: 10, total_usage: 0 } } },
       {
@@ -105,7 +105,8 @@ describe("or_overview", () => {
     ]);
     const client = new OpenRouterClient("sk-or-v1-test");
     const out = await handleOverview(client);
-    expect(out).toContain("⚠️");
+    expect(out).toContain("$0.95/$1.00");
+    expect(out).not.toContain("⚠️");
   });
 
   it("does not crash when /activity returns an error", async () => {

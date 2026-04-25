@@ -66,10 +66,6 @@ export async function handleOverview(client: OpenRouterClient): Promise<string> 
     if (k.limit != null) {
       const reset = k.limit_reset ? ` ${k.limit_reset}` : " total";
       parts.push(`${moneyShort(k.usage_daily ?? k.usage)}/${moneyShort(k.limit)}${reset}`);
-      // ⚠️ near limit
-      if (k.limit > 0 && k.limit_remaining !== null && k.limit_remaining < k.limit * 0.1) {
-        parts.push("⚠️");
-      }
     } else {
       parts.push(`${moneyShort(k.usage)} used (no limit)`);
     }

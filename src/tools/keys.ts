@@ -31,10 +31,6 @@ function fmtKey(k: KeyEntry): string {
   if (k.limit !== null) {
     const reset = k.limit_reset ? ` ${k.limit_reset}` : "";
     lim = `limit ${money(k.limit)}${reset}, remaining ${money(k.limit_remaining)}`;
-    // ⚠️ near-limit warning when remaining <10% of limit
-    if (k.limit > 0 && k.limit_remaining !== null && k.limit_remaining < k.limit * 0.1) {
-      lim += " ⚠️";
-    }
   } else {
     lim = "no limit";
   }
@@ -69,17 +65,6 @@ export async function handleKeyGet(client: OpenRouterClient, hash: string): Prom
     `Usage: total=${money(k.usage)}, day=${money(k.usage_daily)}, week=${money(k.usage_weekly)}, month=${money(k.usage_monthly)}`,
   ];
   if (k.expires_at) lines.push(`Expires: ${k.expires_at}`);
-  // Near-limit warning in detailed view
-  if (
-    k.limit !== null &&
-    k.limit > 0 &&
-    k.limit_remaining !== null &&
-    k.limit_remaining < k.limit * 0.1
-  ) {
-    lines.push(
-      `⚠️  near limit: only ${money(k.limit_remaining)} remaining (${((100 * k.limit_remaining) / k.limit).toFixed(1)}%)`,
-    );
-  }
   lines.push(`Created: ${k.created_at}`);
   lines.push(`Updated: ${k.updated_at}`);
   return lines.join("\n");
