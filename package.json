@@ -1,22 +1,47 @@
 {
   "name": "openrouter-admin-mcp",
   "version": "0.2.0",
+  "description": "MCP server for the OpenRouter management API — credits, inference-key CRUD with daily/weekly/monthly reset & expiration, activity drill-down (by_model/day/provider/key), one-shot dashboard.",
+  "mcpName": "io.github.oviron/openrouter-admin",
   "type": "module",
   "bin": {
     "openrouter-admin-mcp": "./build/index.js"
   },
   "files": [
     "build",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "main": "build/index.js",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && chmod +x build/index.js",
     "start": "node build/index.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "openrouter",
+    "ai",
+    "api-management",
+    "claude",
+    "claude-code"
+  ],
+  "author": "oviron",
+  "license": "MIT",
+  "homepage": "https://github.com/oviron/openrouter-admin-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oviron/openrouter-admin-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oviron/openrouter-admin-mcp/issues"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.3",

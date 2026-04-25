@@ -1,0 +1,22 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - openrouterProvisioningKey
+    properties:
+      openrouterProvisioningKey:
+        type: string
+        description: >-
+          OpenRouter Provisioning API key — create at
+          https://openrouter.ai/settings/provisioning. Distinct from inference
+          keys: it can manage your account but cannot make completion calls.
+        format: password
+  commandFunction: |-
+    (config) => ({
+      command: 'node',
+      args: ['build/index.js'],
+      env: {
+        OPENROUTER_PROVISIONING_KEY: config.openrouterProvisioningKey
+      }
+    })
