@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { OpenRouterClient } from "../src/client.js";
 
-describe("smoke", () => {
-  it("environment is wired", () => {
-    expect(1 + 1).toBe(2);
+describe("OpenRouterClient constructor", () => {
+  it("rejects empty key", () => {
+    expect(() => new OpenRouterClient("")).toThrow(/non-empty/);
   });
 });

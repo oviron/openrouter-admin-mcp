@@ -36,6 +36,13 @@ describe("or_keys_list", () => {
     expect(out).toContain("OpenClaw");
     expect(out).not.toContain("Old");
   });
+
+  it("forwards offset as query param", async () => {
+    const { calls } = mockFetch([{ status: 200, body: { data: [] } }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    await handleKeysList(client, { offset: 25 });
+    expect(calls[0].url).toContain("offset=25");
+  });
 });
 
 describe("or_key_get", () => {
@@ -45,6 +52,14 @@ describe("or_key_get", () => {
     const out = await handleKeyGet(client, "abc123");
     expect(calls[0].url).toContain("/keys/abc123");
     expect(out).toContain("OpenClaw");
+  });
+
+  it("encodes hash characters that need URL encoding", async () => {
+    const { calls } = mockFetch([{ status: 200, body: { data: { hash: "x", name: "y", label: "z", disabled: false, limit: null, limit_remaining: null, usage: 0, created_at: "", updated_at: "" } } }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    await handleKeyGet(client, "weird/hash%value");
+    expect(calls[0].url).toContain("/keys/weird%2Fhash%25value");
+    expect(calls[0].url).not.toContain("/keys/weird/hash%value");
   });
 });
 
@@ -78,6 +93,11 @@ describe("or_key_update", () => {
     expect(calls[0].init.method).toBe("PATCH");
     expect(calls[0].url).toContain("/keys/h");
     expect(JSON.parse(calls[0].init.body as string)).toEqual({ disabled: true });
+  });
+
+  it("rejects when no fields are provided", async () => {
+    const client = new OpenRouterClient("sk-or-v1-test");
+    await expect(handleKeyUpdate(client, { hash: "h" })).rejects.toThrow(/at least one field/);
   });
 });
 

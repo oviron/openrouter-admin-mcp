@@ -39,13 +39,14 @@ export async function handleKeysList(
 
 export async function handleKeyGet(client: OpenRouterClient, hash: string): Promise<string> {
   const k = await client.request<KeyEntry>("GET", `/keys/${encodeURIComponent(hash)}`);
+  const money = (n: number) => `$${n.toFixed(2)}`;
   return [
     `Name: ${k.name}`,
     `Label: ${k.label}`,
     `Hash: ${k.hash}`,
     `Disabled: ${k.disabled}`,
     `Limit: ${k.limit ?? "none"} (remaining: ${k.limit_remaining ?? "—"})`,
-    `Usage: total=$${k.usage}, day=$${k.usage_daily ?? 0}, week=$${k.usage_weekly ?? 0}, month=$${k.usage_monthly ?? 0}`,
+    `Usage: total=${money(k.usage)}, day=${money(k.usage_daily ?? 0)}, week=${money(k.usage_weekly ?? 0)}, month=${money(k.usage_monthly ?? 0)}`,
     `Created: ${k.created_at}`,
     `Updated: ${k.updated_at}`,
   ].join("\n");

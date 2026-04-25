@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { OpenRouterClient } from "../client.js";
 
@@ -18,7 +17,7 @@ interface KeyInfo {
 export async function handleCredits(client: OpenRouterClient): Promise<string> {
   const d = await client.request<CreditsData>("GET", "/credits");
   const remaining = d.total_credits - d.total_usage;
-  return `Credits:\n- Purchased: $${d.total_credits}\n- Used: $${d.total_usage}\n- Remaining: $${remaining.toFixed(4)}`;
+  return `Credits:\n- Purchased: $${d.total_credits.toFixed(4)}\n- Used: $${d.total_usage.toFixed(4)}\n- Remaining: $${remaining.toFixed(4)}`;
 }
 
 export async function handleCurrentKey(client: OpenRouterClient): Promise<string> {
