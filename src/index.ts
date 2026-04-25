@@ -28,7 +28,7 @@ const client = new OpenRouterClient(key);
 
 const server = new McpServer({
   name: "openrouter-admin-mcp",
-  version: "0.7.0",
+  version: "0.7.1",
 });
 
 registerCreditsTools(server, client);

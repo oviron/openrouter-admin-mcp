@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1 — 2026-04-25
+
+### Fixed
+- The `v0.7.0` npm tarball was built from the tag commit, which preceded the README/CHANGELOG refresh for the 22-tool surface. This patch republishes with the up-to-date docs (full Read/Write tool tables, guardrail bind example, design rationale, project layout). No code changes.
+
 ## 0.7.0 — 2026-04-25
 
 ### Added — model & endpoint discovery (thin GET wrappers)
