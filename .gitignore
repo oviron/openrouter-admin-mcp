@@ -4,3 +4,4 @@ build
 *.log
 *.tar.gz
 mcp-publisher
+.npmrc
