@@ -1,0 +1,28 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.oviron/openrouter-admin",
+  "description": "MCP server for OpenRouter management API: credits, key CRUD, activity drill-down, dashboard.",
+  "repository": {
+    "url": "https://github.com/oviron/openrouter-admin-mcp",
+    "source": "github"
+  },
+  "version": "0.2.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "openrouter-admin-mcp",
+      "version": "0.2.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "OPENROUTER_PROVISIONING_KEY",
+          "description": "OpenRouter Provisioning API key — create at https://openrouter.ai/settings/provisioning. Distinct from inference keys: it can manage your account but cannot make completion calls.",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
