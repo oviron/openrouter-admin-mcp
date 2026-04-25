@@ -7,7 +7,8 @@ const KEY = "sk-or-v1-test";
 describe("OpenRouterClient", () => {
   let client: OpenRouterClient;
   beforeEach(() => {
-    client = new OpenRouterClient(KEY);
+    // Disable retries and cache for behavior tests; retry/cache have dedicated tests.
+    client = new OpenRouterClient(KEY, { maxRetries: 0, cache: false });
   });
 
   it("GETs with bearer header and parses {data: ...} envelope", async () => {
@@ -87,5 +88,125 @@ describe("OpenRouterClient", () => {
         expect((e as Error).message).not.toContain(KEY);
       }
     }
+  });
+});
+
+describe("OpenRouterClient retry", () => {
+  it("retries 429 then succeeds, honoring Retry-After seconds", async () => {
+    const sleeps: number[] = [];
+    const c = new OpenRouterClient(KEY, {
+      maxRetries: 3,
+      cache: false,
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+    });
+    const { calls } = mockFetch([
+      { status: 429, body: {}, headers: { "retry-after": "2" } },
+      { status: 200, body: { data: { ok: true } } },
+    ]);
+    const r = await c.request<{ ok: boolean }>("GET", "/credits");
+    expect(r).toEqual({ ok: true });
+    expect(calls.length).toBe(2);
+    expect(sleeps).toEqual([2000]);
+  });
+
+  it("retries 5xx with exponential backoff when no Retry-After", async () => {
+    const sleeps: number[] = [];
+    const c = new OpenRouterClient(KEY, {
+      maxRetries: 3,
+      cache: false,
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+    });
+    mockFetch([
+      { status: 503, body: {} },
+      { status: 503, body: {} },
+      { status: 200, body: { data: 1 } },
+    ]);
+    await c.request("GET", "/credits");
+    expect(sleeps).toEqual([1000, 2000]);
+  });
+
+  it("gives up after maxRetries and throws the last error", async () => {
+    const c = new OpenRouterClient(KEY, {
+      maxRetries: 2,
+      cache: false,
+      sleep: async () => {},
+    });
+    mockFetch([
+      { status: 500, body: { error: "boom" } },
+      { status: 500, body: { error: "boom" } },
+      { status: 500, body: { error: "boom" } },
+    ]);
+    await expect(c.request("GET", "/credits")).rejects.toThrow(/500/);
+  });
+
+  it("does not retry 4xx other than 429", async () => {
+    const c = new OpenRouterClient(KEY, { maxRetries: 3, cache: false, sleep: async () => {} });
+    const { calls } = mockFetch([{ status: 401, body: {} }]);
+    await expect(c.request("GET", "/credits")).rejects.toThrow(/401/);
+    expect(calls.length).toBe(1);
+  });
+});
+
+describe("OpenRouterClient cache", () => {
+  it("caches GET /credits within TTL", async () => {
+    const c = new OpenRouterClient(KEY, { maxRetries: 0, cache: true, cacheTtlMs: 60_000 });
+    const { calls } = mockFetch([
+      { status: 200, body: { data: { total_credits: 10, total_usage: 1 } } },
+      { status: 200, body: { data: { total_credits: 99, total_usage: 99 } } },
+    ]);
+    const a = await c.request("GET", "/credits");
+    const b = await c.request("GET", "/credits");
+    expect(a).toEqual(b);
+    expect(calls.length).toBe(1);
+  });
+
+  it("does not cache /activity", async () => {
+    const c = new OpenRouterClient(KEY, { maxRetries: 0, cache: true });
+    const { calls } = mockFetch([
+      { status: 200, body: { data: [{ usage: 1 }] } },
+      { status: 200, body: { data: [{ usage: 2 }] } },
+    ]);
+    await c.request("GET", "/activity");
+    await c.request("GET", "/activity");
+    expect(calls.length).toBe(2);
+  });
+
+  it("noCache flag bypasses cache", async () => {
+    const c = new OpenRouterClient(KEY, { maxRetries: 0, cache: true });
+    const { calls } = mockFetch([
+      { status: 200, body: { data: { v: 1 } } },
+      { status: 200, body: { data: { v: 2 } } },
+    ]);
+    await c.request("GET", "/credits");
+    await c.request("GET", "/credits", { noCache: true });
+    expect(calls.length).toBe(2);
+  });
+
+  it("PATCH /keys/{hash} invalidates cached /keys list", async () => {
+    const c = new OpenRouterClient(KEY, { maxRetries: 0, cache: true });
+    const { calls } = mockFetch([
+      { status: 200, body: { data: [{ hash: "h", name: "old" }] } },
+      { status: 200, body: { data: { hash: "h", name: "new" } } },
+      { status: 200, body: { data: [{ hash: "h", name: "new" }] } },
+    ]);
+    await c.request("GET", "/keys");
+    await c.request("PATCH", "/keys/h", { body: { name: "new" } });
+    await c.request("GET", "/keys");
+    expect(calls.length).toBe(3);
+  });
+
+  it("cache disabled by default-off setting", async () => {
+    const c = new OpenRouterClient(KEY, { maxRetries: 0, cache: false });
+    const { calls } = mockFetch([
+      { status: 200, body: { data: 1 } },
+      { status: 200, body: { data: 2 } },
+    ]);
+    await c.request("GET", "/credits");
+    await c.request("GET", "/credits");
+    expect(calls.length).toBe(2);
   });
 });

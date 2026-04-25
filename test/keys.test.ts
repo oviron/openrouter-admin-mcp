@@ -70,19 +70,13 @@ describe("or_keys_list", () => {
     expect(out).toContain("expires 2026-12-31");
   });
 
-  it("flags near-limit keys with warning marker", async () => {
-    const near = { ...KEY_FIXTURE, name: "Near", hash: "n1", limit: 10, limit_remaining: 0.5 };
-    mockFetch([{ status: 200, body: { data: [near] } }]);
+  it("renders raw limit and remaining without interpretive markers", async () => {
+    const k = { ...KEY_FIXTURE, name: "Near", hash: "n1", limit: 10, limit_remaining: 0.5 };
+    mockFetch([{ status: 200, body: { data: [k] } }]);
     const client = new OpenRouterClient("sk-or-v1-test");
     const out = await handleKeysList(client, { include_disabled: true });
-    expect(out).toContain("⚠️");
-  });
-
-  it("does not flag healthy keys", async () => {
-    const healthy = { ...KEY_FIXTURE, name: "Fine", limit: 10, limit_remaining: 5 };
-    mockFetch([{ status: 200, body: { data: [healthy] } }]);
-    const client = new OpenRouterClient("sk-or-v1-test");
-    const out = await handleKeysList(client, { include_disabled: true });
+    expect(out).toContain("limit $10.00");
+    expect(out).toContain("remaining $0.50");
     expect(out).not.toContain("⚠️");
   });
 });
@@ -140,11 +134,10 @@ describe("or_key_get", () => {
     const out = await handleKeyGet(client, KEY_FIXTURE.hash);
     expect(out).toMatch(/Limit:.*resets daily/);
     expect(out).toContain("Expires: 2026-12-31T00:00:00Z");
-    expect(out).toContain("near limit");
-    expect(out).toContain("⚠️");
+    expect(out).not.toContain("⚠️");
   });
 
-  it("renders 'Limit: none' for unlimited keys without reset/warning noise", async () => {
+  it("renders 'Limit: none' for unlimited keys", async () => {
     mockFetch([
       {
         status: 200,
@@ -154,7 +147,6 @@ describe("or_key_get", () => {
     const client = new OpenRouterClient("sk-or-v1-test");
     const out = await handleKeyGet(client, KEY_FIXTURE.hash);
     expect(out).toContain("Limit: none");
-    expect(out).not.toContain("near limit");
   });
 });
 
