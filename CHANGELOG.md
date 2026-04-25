@@ -1,9 +1,14 @@
 # Changelog
 
+## 0.7.2 — 2026-04-25
+
+### Fixed
+- Tool count corrected throughout docs and assets: server actually exposes **26** tools (16 read + 10 write), not 22 as previously stated. README, og preview, hero image and CHANGELOG entries updated. Asset version badges bumped to v0.7.2. No code changes.
+
 ## 0.7.1 — 2026-04-25
 
 ### Fixed
-- The `v0.7.0` npm tarball was built from the tag commit, which preceded the README/CHANGELOG refresh for the 22-tool surface. This patch republishes with the up-to-date docs (full Read/Write tool tables, guardrail bind example, design rationale, project layout). No code changes.
+- The `v0.7.0` npm tarball was built from the tag commit, which preceded the README/CHANGELOG refresh for the 26-tool surface. This patch republishes with the up-to-date docs (full Read/Write tool tables, guardrail bind example, design rationale, project layout). No code changes.
 
 ## 0.7.0 — 2026-04-25
 

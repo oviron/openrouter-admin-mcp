@@ -21,7 +21,7 @@ OpenRouter's UI is solid for one-off tweaks, but checking spend across keys, dri
 
 ## Features
 
-22 tools wrapping the OpenRouter management API:
+26 tools wrapping the OpenRouter management API:
 
 - **`or_overview`** — one-shot dashboard: credits + active keys (with reset/expiration) + today's UTC burn by model.
 - **Inference key CRUD** including `limit_reset` (daily/weekly/monthly) and `expires_at`.
