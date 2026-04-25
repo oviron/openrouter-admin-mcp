@@ -1,6 +1,6 @@
 {
   "name": "openrouter-admin-mcp",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "MCP server for the OpenRouter management API — credits, inference-key CRUD with daily/weekly/monthly reset & expiration, activity drill-down (by_model/day/provider/key), one-shot dashboard.",
   "mcpName": "io.github.oviron/openrouter-admin",
   "type": "module",

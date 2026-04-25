@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0 — 2026-04-25
+
+### Added — model & endpoint discovery (thin GET wrappers)
+
+- **`or_model_endpoints`** — `GET /api/v1/models/:author/:slug/endpoints`. Per-provider list for a specific model: pricing, context length, quantization, uptime over the last 30m, status. Use when picking the cheapest or most-stable provider for a model.
+- **`or_models_user`** — `GET /api/v1/models/user`. Models available under the current account's privacy and guardrail settings (filtered set), distinct from `or_models` (full public catalog).
+- **`or_zdr_endpoints`** — `GET /api/v1/endpoints/zdr`. ZDR-compliant model endpoints, for agents under privacy/compliance constraints.
+
+### Tests
+- 78 → 84 unit tests.
+
 ## 0.6.0 — 2026-04-25
 
 ### Added — Guardrails (account-wide spending limits + provider/model allowlists)
