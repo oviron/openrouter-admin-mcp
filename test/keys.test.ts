@@ -47,3 +47,47 @@ describe("or_key_get", () => {
     expect(out).toContain("OpenClaw");
   });
 });
+
+import { handleKeyCreate, handleKeyUpdate, handleKeyDelete } from "../src/tools/keys.js";
+
+describe("or_key_create", () => {
+  it("posts name + limit and surfaces the one-time secret", async () => {
+    const { calls } = mockFetch([{
+      status: 200,
+      body: { data: { hash: "newhash", name: "test", label: "sk-or-v1-...", key: "sk-or-v1-FULL_SECRET", limit: 5 } },
+    }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    const out = await handleKeyCreate(client, { name: "test", limit: 5 });
+    expect(calls[0].init.method).toBe("POST");
+    expect(JSON.parse(calls[0].init.body as string)).toMatchObject({ name: "test", limit: 5 });
+    expect(out).toContain("sk-or-v1-FULL_SECRET");
+    expect(out).toMatch(/cannot be retrieved later/i);
+  });
+
+  it("requires non-empty name", () => {
+    const client = new OpenRouterClient("sk-or-v1-test");
+    return expect(handleKeyCreate(client, { name: "" })).rejects.toThrow();
+  });
+});
+
+describe("or_key_update", () => {
+  it("PATCHes only the provided fields", async () => {
+    const { calls } = mockFetch([{ status: 200, body: { data: { hash: "h", name: "x", disabled: true, limit: null, limit_remaining: null, usage: 0, label: "x", created_at: "", updated_at: "" } } }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    await handleKeyUpdate(client, { hash: "h", disabled: true });
+    expect(calls[0].init.method).toBe("PATCH");
+    expect(calls[0].url).toContain("/keys/h");
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ disabled: true });
+  });
+});
+
+describe("or_key_delete", () => {
+  it("DELETEs by hash", async () => {
+    const { calls } = mockFetch([{ status: 200, body: { data: { ok: true } } }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    const out = await handleKeyDelete(client, "h");
+    expect(calls[0].init.method).toBe("DELETE");
+    expect(calls[0].url).toContain("/keys/h");
+    expect(out).toMatch(/deleted/i);
+  });
+});
