@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { OpenRouterClient } from "../client.js";
+import type { OpenRouterClient } from "../client.js";
 
 interface CreditsData {
   total_credits: number;
@@ -28,11 +28,9 @@ interface ActivityRow {
   requests?: number;
 }
 
-const money = (n: number | null | undefined): string =>
-  n == null ? "—" : `$${n.toFixed(4)}`;
+const money = (n: number | null | undefined): string => (n == null ? "—" : `$${n.toFixed(4)}`);
 
-const moneyShort = (n: number | null | undefined): string =>
-  n == null ? "—" : `$${n.toFixed(2)}`;
+const moneyShort = (n: number | null | undefined): string => (n == null ? "—" : `$${n.toFixed(2)}`);
 
 function todayUtcDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -42,9 +40,11 @@ export async function handleOverview(client: OpenRouterClient): Promise<string> 
   const [credits, keys, activity] = await Promise.all([
     client.request<CreditsData>("GET", "/credits"),
     client.request<KeyEntry[]>("GET", "/keys"),
-    client.request<ActivityRow[]>("GET", "/activity", {
-      query: { date: todayUtcDate() },
-    }).catch(() => [] as ActivityRow[]),
+    client
+      .request<ActivityRow[]>("GET", "/activity", {
+        query: { date: todayUtcDate() },
+      })
+      .catch(() => [] as ActivityRow[]),
   ]);
 
   const remaining = credits.total_credits - credits.total_usage;
@@ -52,20 +52,20 @@ export async function handleOverview(client: OpenRouterClient): Promise<string> 
 
   // ── Account ─────────────────────────────────────
   lines.push(
-    `Account: ${moneyShort(remaining)} remaining of ${moneyShort(credits.total_credits)} purchased (used ${moneyShort(credits.total_usage)})`
+    `Account: ${moneyShort(remaining)} remaining of ${moneyShort(credits.total_credits)} purchased (used ${moneyShort(credits.total_usage)})`,
   );
 
   // ── Keys ────────────────────────────────────────
   const active = keys.filter((k) => !k.disabled);
   lines.push("");
-  lines.push(`Keys (${active.length} active${keys.length > active.length ? `, ${keys.length - active.length} disabled` : ""}):`);
+  lines.push(
+    `Keys (${active.length} active${keys.length > active.length ? `, ${keys.length - active.length} disabled` : ""}):`,
+  );
   for (const k of active) {
-    let parts: string[] = [];
+    const parts: string[] = [];
     if (k.limit != null) {
       const reset = k.limit_reset ? ` ${k.limit_reset}` : " total";
-      parts.push(
-        `${moneyShort(k.usage_daily ?? k.usage)}/${moneyShort(k.limit)}${reset}`
-      );
+      parts.push(`${moneyShort(k.usage_daily ?? k.usage)}/${moneyShort(k.limit)}${reset}`);
       // ⚠️ near limit
       if (k.limit > 0 && k.limit_remaining !== null && k.limit_remaining < k.limit * 0.1) {
         parts.push("⚠️");
@@ -114,6 +114,6 @@ export function registerOverviewTools(server: McpServer, client: OpenRouterClien
     {},
     async () => ({
       content: [{ type: "text" as const, text: await handleOverview(client) }],
-    })
+    }),
   );
 }

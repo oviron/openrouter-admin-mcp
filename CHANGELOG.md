@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0 — 2026-04-25
+
+### Security
+- **Destructive write tools (`or_key_create`, `or_key_update`, `or_key_delete`) are now opt-in.** They are not registered by default. Set `OPENROUTER_ADMIN_ALLOW_WRITE=1` in the env block to enable. Rationale: prevents accidental key mutation through prompt-injected tool calls when only read access is intended. Read-only tools (`or_overview`, `or_credits`, `or_current_key`, `or_keys_list`, `or_key_get`, `or_activity`) are unchanged and always available.
+- Startup log now reports which mode is active (`write tools: ENABLED|disabled`).
+
+### Tooling
+- Added Biome (`@biomejs/biome`) as the linter/formatter — `npm run lint`, `npm run lint:fix`, `npm run format`.
+- CI workflow now runs `lint → build → test` in sequence on Node 20 and 22.
+- Dropped Node 18 from the support matrix (vitest 4.x requires Node ≥20.18 for `node:util.styleText`). `engines.node` bumped to `>=20.18`.
+- `prepublishOnly` now runs lint + build + test before publishing.
+
+### Tests
+- 42 → 45 unit tests. New `test/registration.test.ts` covers the opt-in registration matrix (default / `allowWrite=false` / `allowWrite=true`).
+
 ## 0.2.0 — 2026-04-25
 
 ### Added

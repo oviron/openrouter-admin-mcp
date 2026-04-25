@@ -1,10 +1,8 @@
-import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { OpenRouterClient } from "../client.js";
+import { z } from "zod";
+import type { OpenRouterClient } from "../client.js";
 
-const dateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "date must be YYYY-MM-DD");
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date must be YYYY-MM-DD");
 
 interface ActivityRow {
   date?: string;
@@ -23,8 +21,7 @@ interface ActivityRow {
   [k: string]: unknown;
 }
 
-const money = (n: number | null | undefined) =>
-  n == null ? "—" : `$${n.toFixed(4)}`;
+const money = (n: number | null | undefined) => (n == null ? "—" : `$${n.toFixed(4)}`);
 
 const tokens = (n: number | null | undefined) =>
   n == null || n === 0 ? "—" : `${n.toLocaleString("en-US")}`;
@@ -45,26 +42,21 @@ function fmtRowDetailed(r: ActivityRow): string {
   parts.push(`${r.requests ?? 0} req`);
   if (r.prompt_tokens || r.completion_tokens || r.reasoning_tokens) {
     parts.push(
-      `tok in/out/reason: ${tokens(r.prompt_tokens)}/${tokens(r.completion_tokens)}/${tokens(r.reasoning_tokens)}`
+      `tok in/out/reason: ${tokens(r.prompt_tokens)}/${tokens(r.completion_tokens)}/${tokens(r.reasoning_tokens)}`,
     );
   }
   if (r.provider_name) parts.push(`via ${r.provider_name}`);
   if (r.byok_usage_inference || r.byok_requests) {
-    parts.push(
-      `byok ${money(r.byok_usage_inference)} (${r.byok_requests ?? 0} req)`
-    );
+    parts.push(`byok ${money(r.byok_usage_inference)} (${r.byok_requests ?? 0} req)`);
   }
   return `- ${parts.join(" | ")}`;
 }
 
 function aggregateBy(
   rows: ActivityRow[],
-  keyFn: (r: ActivityRow) => string
+  keyFn: (r: ActivityRow) => string,
 ): Array<{ key: string; usage: number; requests: number; rows: number }> {
-  const map = new Map<
-    string,
-    { key: string; usage: number; requests: number; rows: number }
-  >();
+  const map = new Map<string, { key: string; usage: number; requests: number; rows: number }>();
   for (const r of rows) {
     const k = keyFn(r);
     const cur = map.get(k) ?? { key: k, usage: 0, requests: 0, rows: 0 };
@@ -86,7 +78,7 @@ export async function handleActivity(
     user_id?: string;
     aggregate?: AggregateMode;
     limit?: number;
-  }
+  },
 ): Promise<string> {
   if (args.date !== undefined) dateSchema.parse(args.date);
   const data = await client.request<ActivityRow[]>("GET", "/activity", {
@@ -108,19 +100,14 @@ export async function handleActivity(
     const agg = aggregateBy(data, (r) => r.model ?? "(unknown)");
     const lines = agg
       .slice(0, limit)
-      .map(
-        (a) =>
-          `- ${a.key.padEnd(40)} ${money(a.usage)} | ${a.requests} req | ${a.rows} rows`
-      );
+      .map((a) => `- ${a.key.padEnd(40)} ${money(a.usage)} | ${a.requests} req | ${a.rows} rows`);
     return `${header}\nBy model (top ${Math.min(limit, agg.length)}):\n${lines.join("\n")}`;
   }
 
   if (mode === "by_day") {
     const agg = aggregateBy(data, (r) => shortDate(r.date));
     agg.sort((a, b) => a.key.localeCompare(b.key));
-    const lines = agg.map(
-      (a) => `- ${a.key} ${money(a.usage)} | ${a.requests} req`
-    );
+    const lines = agg.map((a) => `- ${a.key} ${money(a.usage)} | ${a.requests} req`);
     return `${header}\nBy day:\n${lines.join("\n")}`;
   }
 
@@ -128,10 +115,7 @@ export async function handleActivity(
     const agg = aggregateBy(data, (r) => r.provider_name ?? "(unknown)");
     const lines = agg
       .slice(0, limit)
-      .map(
-        (a) =>
-          `- ${a.key.padEnd(30)} ${money(a.usage)} | ${a.requests} req | ${a.rows} rows`
-      );
+      .map((a) => `- ${a.key.padEnd(30)} ${money(a.usage)} | ${a.requests} req | ${a.rows} rows`);
     return `${header}\nBy provider (top ${Math.min(limit, agg.length)}):\n${lines.join("\n")}`;
   }
 
@@ -139,10 +123,7 @@ export async function handleActivity(
     const agg = aggregateBy(data, (r) => r.api_key_hash ?? "(unknown)");
     const lines = agg
       .slice(0, limit)
-      .map(
-        (a) =>
-          `- ${a.key.padEnd(64)} ${money(a.usage)} | ${a.requests} req | ${a.rows} rows`
-      );
+      .map((a) => `- ${a.key.padEnd(64)} ${money(a.usage)} | ${a.requests} req | ${a.rows} rows`);
     return `${header}\nBy api_key_hash (top ${Math.min(limit, agg.length)}):\n${lines.join("\n")}`;
   }
 
@@ -164,27 +145,17 @@ export function registerActivityTools(server: McpServer, client: OpenRouterClien
     {
       date: z.string().optional().describe("Single UTC date in YYYY-MM-DD"),
       api_key_hash: z.string().optional().describe("Filter by inference key hash"),
-      user_id: z
-        .string()
-        .optional()
-        .describe("Org member user_id (org accounts only)"),
+      user_id: z.string().optional().describe("Org member user_id (org accounts only)"),
       aggregate: z
         .enum(["none", "by_model", "by_day", "by_provider", "by_key"])
         .optional()
         .describe(
-          "Aggregation: none=raw rows sorted by usage; by_model/by_day/by_provider/by_key=grouped totals"
+          "Aggregation: none=raw rows sorted by usage; by_model/by_day/by_provider/by_key=grouped totals",
         ),
-      limit: z
-        .number()
-        .int()
-        .positive()
-        .optional()
-        .describe("Max rows in output (default 50)"),
+      limit: z.number().int().positive().optional().describe("Max rows in output (default 50)"),
     },
     async (args) => ({
-      content: [
-        { type: "text" as const, text: await handleActivity(client, args) },
-      ],
-    })
+      content: [{ type: "text" as const, text: await handleActivity(client, args) }],
+    }),
   );
 }

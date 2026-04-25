@@ -51,7 +51,26 @@ Create a Provisioning key at <https://openrouter.ai/settings/provisioning>, then
 }
 ```
 
-Restart your client to load the server.
+Restart your client to load the server. By default this gives **read-only** access — to enable key creation, mutation, and deletion, see [Enabling write tools](#enabling-write-tools) below.
+
+### Enabling write tools
+
+Destructive operations (`or_key_create`, `or_key_update`, `or_key_delete`) are **disabled by default** to prevent accidental key mutation through prompt-injected tool calls. Add `OPENROUTER_ADMIN_ALLOW_WRITE` to your env block to enable them:
+
+```json
+"env": {
+  "OPENROUTER_PROVISIONING_KEY": "sk-or-v1-...",
+  "OPENROUTER_ADMIN_ALLOW_WRITE": "1"
+}
+```
+
+The server logs which mode it started in:
+
+```
+openrouter-admin-mcp running on stdio (write tools: ENABLED)
+```
+
+Read tools (`or_overview`, `or_credits`, `or_current_key`, `or_keys_list`, `or_key_get`, `or_activity`) are always available regardless of this flag.
 
 ## Tools
 
@@ -62,9 +81,9 @@ Restart your client to load the server.
 | `or_current_key` | Metadata of the Provisioning key the server is using. |
 | `or_keys_list` | All inference keys with usage, limits, reset cadence, expiration, ⚠️ if near limit. |
 | `or_key_get` | Detailed view of one key by hash. |
-| `or_key_create` | Create a new inference key. Returns the one-time secret. ⚠️ Destructive. |
-| `or_key_update` | Update name / disabled / limit / `limit_reset` / `expires_at`. ⚠️ Destructive. |
-| `or_key_delete` | Permanently delete a key. ⚠️ Destructive. |
+| `or_key_create` | Create a new inference key. Returns the one-time secret. ⚠️ Destructive — opt-in. |
+| `or_key_update` | Update name / disabled / limit / `limit_reset` / `expires_at`. ⚠️ Destructive — opt-in. |
+| `or_key_delete` | Permanently delete a key. ⚠️ Destructive — opt-in. |
 | `or_activity` | Usage for the last 30 UTC days. Filters: `date`, `api_key_hash`, `user_id`. Aggregations: `none`, `by_model`, `by_day`, `by_provider`, `by_key`. |
 
 ### Example — create a daily-capped temporary key

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { OpenRouterClient } from "../src/client.js";
 
 describe("OpenRouterClient constructor", () => {

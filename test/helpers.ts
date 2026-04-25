@@ -1,4 +1,4 @@
-import { vi, expect } from "vitest";
+import { expect, vi } from "vitest";
 
 export type MockResponse = {
   status: number;
@@ -24,5 +24,5 @@ export function mockFetch(responses: MockResponse[]) {
 
 export function expectAuthHeader(init: RequestInit, key: string) {
   const headers = init.headers as Record<string, string>;
-  expect(headers["Authorization"]).toBe(`Bearer ${key}`);
+  expect(headers.Authorization).toBe(`Bearer ${key}`);
 }
