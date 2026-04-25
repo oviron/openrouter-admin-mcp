@@ -6,7 +6,23 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish-mcp-registry:
+  # Wave 1 — verify before publishing anywhere
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
+
+  # Wave 2 — publish to npm via OIDC Trusted Publisher (no NPM_TOKEN needed)
+  publish-npm:
+    needs: verify
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -16,6 +32,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      # Trusted Publishing requires npm ≥11.5.1
+      - run: npm install -g npm@latest
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish --provenance --access public
+
+  # Wave 3 — publish metadata to the official MCP Registry via GitHub OIDC
+  publish-mcp-registry:
+    needs: publish-npm
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
       - name: Install mcp-publisher
         run: |
           curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" \
