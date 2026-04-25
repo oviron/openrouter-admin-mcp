@@ -43,6 +43,15 @@ describe("or_keys_list", () => {
     await handleKeysList(client, { offset: 25 });
     expect(calls[0].url).toContain("offset=25");
   });
+
+  it("formats limit_remaining cleanly (no float artifacts)", async () => {
+    const fixture = { ...KEY_FIXTURE, limit_remaining: 0.22570307199999995 };
+    mockFetch([{ status: 200, body: { data: [fixture] } }]);
+    const client = new OpenRouterClient("sk-or-v1-test");
+    const out = await handleKeysList(client, { include_disabled: true });
+    expect(out).toContain("$0.23");
+    expect(out).not.toContain("0.22570307199999995");
+  });
 });
 
 describe("or_key_get", () => {

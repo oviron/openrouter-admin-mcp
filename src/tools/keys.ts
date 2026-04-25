@@ -19,10 +19,16 @@ interface KeyEntry {
 
 interface CreateKeyResponse extends KeyEntry { key?: string; }
 
+const money = (n: number | null | undefined): string =>
+  n == null ? "—" : `$${n.toFixed(2)}`;
+
 function fmtKey(k: KeyEntry): string {
   const status = k.disabled ? " (disabled)" : "";
-  const lim = k.limit !== null ? `limit $${k.limit}, remaining $${k.limit_remaining}` : "no limit";
-  return `- **${k.name}**${status} | usage $${k.usage.toFixed(2)} | ${lim} | hash: \`${k.hash}\` | label: ${k.label}`;
+  const lim =
+    k.limit !== null
+      ? `limit ${money(k.limit)}, remaining ${money(k.limit_remaining)}`
+      : "no limit";
+  return `- **${k.name}**${status} | usage ${money(k.usage)} | ${lim} | hash: \`${k.hash}\` | label: ${k.label}`;
 }
 
 export async function handleKeysList(
@@ -39,14 +45,13 @@ export async function handleKeysList(
 
 export async function handleKeyGet(client: OpenRouterClient, hash: string): Promise<string> {
   const k = await client.request<KeyEntry>("GET", `/keys/${encodeURIComponent(hash)}`);
-  const money = (n: number) => `$${n.toFixed(2)}`;
   return [
     `Name: ${k.name}`,
     `Label: ${k.label}`,
     `Hash: ${k.hash}`,
     `Disabled: ${k.disabled}`,
-    `Limit: ${k.limit ?? "none"} (remaining: ${k.limit_remaining ?? "—"})`,
-    `Usage: total=${money(k.usage)}, day=${money(k.usage_daily ?? 0)}, week=${money(k.usage_weekly ?? 0)}, month=${money(k.usage_monthly ?? 0)}`,
+    `Limit: ${money(k.limit)} (remaining: ${money(k.limit_remaining)})`,
+    `Usage: total=${money(k.usage)}, day=${money(k.usage_daily)}, week=${money(k.usage_weekly)}, month=${money(k.usage_monthly)}`,
     `Created: ${k.created_at}`,
     `Updated: ${k.updated_at}`,
   ].join("\n");
