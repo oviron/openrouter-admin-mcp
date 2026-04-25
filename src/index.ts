@@ -5,8 +5,10 @@ import { OpenRouterClient } from "./client.js";
 import { registerActivityTools } from "./tools/activity.js";
 import { registerCreditsTools } from "./tools/credits.js";
 import { registerGenerationTools } from "./tools/generation.js";
+import { registerGuardrailsTools } from "./tools/guardrails.js";
 import { registerKeysTools } from "./tools/keys.js";
 import { registerModelsTools } from "./tools/models.js";
+import { registerOrganizationTools } from "./tools/organization.js";
 import { registerOverviewTools } from "./tools/overview.js";
 
 const key = process.env.OPENROUTER_PROVISIONING_KEY;
@@ -26,7 +28,7 @@ const client = new OpenRouterClient(key);
 
 const server = new McpServer({
   name: "openrouter-admin-mcp",
-  version: "0.5.0",
+  version: "0.6.0",
 });
 
 registerCreditsTools(server, client);
@@ -35,6 +37,8 @@ registerActivityTools(server, client);
 registerOverviewTools(server, client);
 registerGenerationTools(server, client);
 registerModelsTools(server, client);
+registerGuardrailsTools(server, client, { allowWrite });
+registerOrganizationTools(server, client);
 
 async function main() {
   const transport = new StdioServerTransport();

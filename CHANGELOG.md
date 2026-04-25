@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.6.0 — 2026-04-25
+
+### Added — Guardrails (account-wide spending limits + provider/model allowlists)
+
+OpenRouter exposes a rich Guardrails API; previously 0% covered. Read tools always available; mutations require `OPENROUTER_ADMIN_ALLOW_WRITE=1`.
+
+Read:
+- **`or_guardrails_list`** — list all guardrails: limit_usd, reset_interval (daily/weekly/monthly), allowed/ignored providers, allowed/ignored models, enforce_zdr.
+- **`or_guardrail_get`** — full details of one guardrail by id.
+- **`or_guardrails_assignments`** — composite: combines `/guardrails/key-assignments` and `/guardrails/member-assignments` into a single grouped view ("which keys/members are bound to which guardrail").
+
+Write (opt-in, destructive):
+- **`or_guardrail_create`** / **`or_guardrail_update`** / **`or_guardrail_delete`** — CRUD over `/guardrails`.
+- **`or_guardrail_assign_keys`** / **`or_guardrail_unassign_keys`** — bulk-assign a guardrail to inference keys via `/guardrails/{id}/keys/bulk-(un)assign`.
+- **`or_guardrail_assign_members`** / **`or_guardrail_unassign_members`** — bulk-assign to org members via `/guardrails/{id}/members/bulk-(un)assign`.
+
+### Added — Organization
+- **`or_org_members`** — list members of the OpenRouter organization (Management-key + org account). Useful as input for guardrail member-assignments.
+
+### Tests
+- 61 → 78 unit tests (15 for guardrails, 2 for organization).
+
 ## 0.5.0 — 2026-04-25
 
 ### Added
