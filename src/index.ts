@@ -4,7 +4,9 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { OpenRouterClient } from "./client.js";
 import { registerActivityTools } from "./tools/activity.js";
 import { registerCreditsTools } from "./tools/credits.js";
+import { registerGenerationTools } from "./tools/generation.js";
 import { registerKeysTools } from "./tools/keys.js";
+import { registerModelsTools } from "./tools/models.js";
 import { registerOverviewTools } from "./tools/overview.js";
 
 const key = process.env.OPENROUTER_PROVISIONING_KEY;
@@ -24,13 +26,15 @@ const client = new OpenRouterClient(key);
 
 const server = new McpServer({
   name: "openrouter-admin-mcp",
-  version: "0.3.0",
+  version: "0.5.0",
 });
 
 registerCreditsTools(server, client);
 registerKeysTools(server, client, { allowWrite });
 registerActivityTools(server, client);
 registerOverviewTools(server, client);
+registerGenerationTools(server, client);
+registerModelsTools(server, client);
 
 async function main() {
   const transport = new StdioServerTransport();
