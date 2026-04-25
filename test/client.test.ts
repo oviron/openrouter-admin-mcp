@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { OpenRouterClient, OpenRouterError } from "../src/client.js";
-import { mockFetch, expectAuthHeader } from "./helpers.js";
+import { expectAuthHeader, mockFetch } from "./helpers.js";
 
 const KEY = "sk-or-v1-test";
 
@@ -16,7 +16,7 @@ describe("OpenRouterClient", () => {
     ]);
     const res = await client.request<{ total_credits: number; total_usage: number }>(
       "GET",
-      "/credits"
+      "/credits",
     );
     expect(res).toEqual({ total_credits: 15, total_usage: 13 });
     expect(calls[0].url).toBe("https://openrouter.ai/api/v1/credits");
@@ -26,9 +26,7 @@ describe("OpenRouterClient", () => {
   it("appends query params", async () => {
     const { calls } = mockFetch([{ status: 200, body: { data: [] } }]);
     await client.request("GET", "/activity", { query: { date: "2026-04-25" } });
-    expect(calls[0].url).toBe(
-      "https://openrouter.ai/api/v1/activity?date=2026-04-25"
-    );
+    expect(calls[0].url).toBe("https://openrouter.ai/api/v1/activity?date=2026-04-25");
   });
 
   it("sends JSON body for POST", async () => {
@@ -40,7 +38,7 @@ describe("OpenRouterClient", () => {
       limit: 5,
     });
     expect((calls[0].init.headers as Record<string, string>)["Content-Type"]).toBe(
-      "application/json"
+      "application/json",
     );
   });
 
@@ -49,26 +47,22 @@ describe("OpenRouterClient", () => {
       { status: 401, body: { error: { message: "no" } } },
       { status: 401, body: { error: { message: "no" } } },
     ]);
+    await expect(client.request("GET", "/credits")).rejects.toThrow(OpenRouterError);
     await expect(client.request("GET", "/credits")).rejects.toThrow(
-      OpenRouterError
-    );
-    await expect(client.request("GET", "/credits")).rejects.toThrow(
-      /Invalid or expired Provisioning key/
+      /Invalid or expired Provisioning key/,
     );
   });
 
   it("maps 403 to scope error", async () => {
     mockFetch([{ status: 403, body: {} }]);
     await expect(client.request("GET", "/credits")).rejects.toThrow(
-      /Provisioning key lacks required scope/
+      /Provisioning key lacks required scope/,
     );
   });
 
   it("maps 429 to rate-limit error", async () => {
     mockFetch([{ status: 429, body: {} }]);
-    await expect(client.request("GET", "/credits")).rejects.toThrow(
-      /Rate limited by OpenRouter/
-    );
+    await expect(client.request("GET", "/credits")).rejects.toThrow(/Rate limited by OpenRouter/);
   });
 
   it("includes status and truncated body for other failures", async () => {

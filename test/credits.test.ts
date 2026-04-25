@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { OpenRouterClient } from "../src/client.js";
-import { mockFetch } from "./helpers.js";
 import { handleCredits, handleCurrentKey } from "../src/tools/credits.js";
+import { mockFetch } from "./helpers.js";
 
 describe("or_credits", () => {
   it("returns balance with computed remaining", async () => {
@@ -16,10 +16,20 @@ describe("or_credits", () => {
 
 describe("or_current_key", () => {
   it("renders key metadata flags", async () => {
-    mockFetch([{
-      status: 200,
-      body: { data: { label: "sk-or-v1-541...18a", is_management_key: true, is_provisioning_key: true, limit: null, usage: 0 } },
-    }]);
+    mockFetch([
+      {
+        status: 200,
+        body: {
+          data: {
+            label: "sk-or-v1-541...18a",
+            is_management_key: true,
+            is_provisioning_key: true,
+            limit: null,
+            usage: 0,
+          },
+        },
+      },
+    ]);
     const client = new OpenRouterClient("sk-or-v1-test");
     const out = await handleCurrentKey(client);
     expect(out).toMatch(/management/i);

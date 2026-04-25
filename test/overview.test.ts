@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { OpenRouterClient } from "../src/client.js";
-import { mockFetch } from "./helpers.js";
 import { handleOverview } from "../src/tools/overview.js";
+import { mockFetch } from "./helpers.js";
 
 describe("or_overview", () => {
   it("combines credits + keys + today's activity into one response", async () => {
@@ -53,7 +53,7 @@ describe("or_overview", () => {
     const out = await handleOverview(client);
 
     // Account section
-    expect(out).toContain("$1.38");          // 15 - 13.62
+    expect(out).toContain("$1.38"); // 15 - 13.62
     expect(out).toContain("$15.00");
     expect(out).toContain("$13.62");
 
@@ -87,16 +87,18 @@ describe("or_overview", () => {
       {
         status: 200,
         body: {
-          data: [{
-            hash: "h1",
-            name: "Burnt",
-            label: "sk-...",
-            disabled: false,
-            limit: 1.0,
-            limit_remaining: 0.05,
-            usage: 0.95,
-            usage_daily: 0.95,
-          }],
+          data: [
+            {
+              hash: "h1",
+              name: "Burnt",
+              label: "sk-...",
+              disabled: false,
+              limit: 1.0,
+              limit_remaining: 0.05,
+              usage: 0.95,
+              usage_daily: 0.95,
+            },
+          ],
         },
       },
       { status: 200, body: { data: [] } },
@@ -109,7 +111,22 @@ describe("or_overview", () => {
   it("does not crash when /activity returns an error", async () => {
     mockFetch([
       { status: 200, body: { data: { total_credits: 5, total_usage: 1 } } },
-      { status: 200, body: { data: [{ hash: "x", name: "k", label: "l", disabled: false, limit: null, limit_remaining: null, usage: 1 }] } },
+      {
+        status: 200,
+        body: {
+          data: [
+            {
+              hash: "x",
+              name: "k",
+              label: "l",
+              disabled: false,
+              limit: null,
+              limit_remaining: null,
+              usage: 1,
+            },
+          ],
+        },
+      },
       { status: 500, body: { error: "boom" } },
     ]);
     const client = new OpenRouterClient("sk-or-v1-test");

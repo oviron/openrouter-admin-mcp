@@ -1,7 +1,10 @@
 const BASE = "https://openrouter.ai/api/v1";
 
 export class OpenRouterError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
     this.name = "OpenRouterError";
   }
@@ -20,18 +23,15 @@ export class OpenRouterClient {
   async request<T>(
     method: "GET" | "POST" | "PATCH" | "DELETE",
     path: string,
-    opts: RequestOptions = {}
+    opts: RequestOptions = {},
   ): Promise<T> {
     let url = BASE + path;
     if (opts.query) {
       const qs = Object.entries(opts.query)
         .filter(([, v]) => v !== undefined && v !== null && v !== "")
-        .map(
-          ([k, v]) =>
-            `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`
-        )
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
         .join("&");
-      if (qs) url += "?" + qs;
+      if (qs) url += `?${qs}`;
     }
 
     const headers: Record<string, string> = {
@@ -48,18 +48,18 @@ export class OpenRouterClient {
     let payload: unknown = null;
     const text = await res.text();
     if (text) {
-      try { payload = JSON.parse(text); } catch { payload = text; }
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        payload = text;
+      }
     }
 
     if (!res.ok) {
       throw new OpenRouterError(res.status, this.formatError(res.status, payload));
     }
 
-    if (
-      payload &&
-      typeof payload === "object" &&
-      "data" in (payload as Record<string, unknown>)
-    ) {
+    if (payload && typeof payload === "object" && "data" in (payload as Record<string, unknown>)) {
       return (payload as { data: T }).data;
     }
     return payload as T;
@@ -75,7 +75,7 @@ export class OpenRouterClient {
       case 429:
         return "Rate limited by OpenRouter (429)";
       default: {
-        const trunc = apiMsg.length > 300 ? apiMsg.slice(0, 300) + "…" : apiMsg;
+        const trunc = apiMsg.length > 300 ? `${apiMsg.slice(0, 300)}…` : apiMsg;
         return `OpenRouter ${status}: ${trunc || "(empty body)"}`;
       }
     }

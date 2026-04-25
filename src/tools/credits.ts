@@ -1,7 +1,10 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { OpenRouterClient } from "../client.js";
+import type { OpenRouterClient } from "../client.js";
 
-interface CreditsData { total_credits: number; total_usage: number; }
+interface CreditsData {
+  total_credits: number;
+  total_usage: number;
+}
 interface KeyInfo {
   label: string;
   is_management_key?: boolean;
@@ -22,10 +25,10 @@ export async function handleCredits(client: OpenRouterClient): Promise<string> {
 
 export async function handleCurrentKey(client: OpenRouterClient): Promise<string> {
   const k = await client.request<KeyInfo>("GET", "/key");
-  const flags = [
-    k.is_management_key ? "management" : null,
-    k.is_provisioning_key ? "provisioning" : null,
-  ].filter(Boolean).join(", ") || "inference";
+  const flags =
+    [k.is_management_key ? "management" : null, k.is_provisioning_key ? "provisioning" : null]
+      .filter(Boolean)
+      .join(", ") || "inference";
   const lines = [
     `Label: ${k.label}`,
     `Type: ${flags}`,
@@ -41,12 +44,12 @@ export function registerCreditsTools(server: McpServer, client: OpenRouterClient
     "or_credits",
     "Show OpenRouter balance: total purchased, total used, remaining.",
     {},
-    async () => ({ content: [{ type: "text" as const, text: await handleCredits(client) }] })
+    async () => ({ content: [{ type: "text" as const, text: await handleCredits(client) }] }),
   );
   server.tool(
     "or_current_key",
     "Show metadata of the Provisioning key the server is using (label, type, limits, usage).",
     {},
-    async () => ({ content: [{ type: "text" as const, text: await handleCurrentKey(client) }] })
+    async () => ({ content: [{ type: "text" as const, text: await handleCurrentKey(client) }] }),
   );
 }

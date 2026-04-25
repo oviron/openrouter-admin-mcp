@@ -6,12 +6,12 @@
     "url": "https://github.com/oviron/openrouter-admin-mcp",
     "source": "github"
   },
-  "version": "0.2.0",
+  "version": "0.3.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "openrouter-admin-mcp",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "transport": {
         "type": "stdio"
       },
@@ -21,6 +21,12 @@
           "description": "OpenRouter Provisioning API key — create at https://openrouter.ai/settings/provisioning. Distinct from inference keys: it can manage your account but cannot make completion calls.",
           "isRequired": true,
           "isSecret": true
+        },
+        {
+          "name": "OPENROUTER_ADMIN_ALLOW_WRITE",
+          "description": "Set to '1' to enable destructive write tools (or_key_create, or_key_update, or_key_delete). Disabled by default — read-only tools (or_overview, or_credits, or_keys_list, or_key_get, or_activity, or_current_key) are always available.",
+          "isRequired": false,
+          "isSecret": false
         }
       ]
     }
