@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 — 2026-04-25
+
+### Added
+- **`or_generation`** — fetch a single inference call by `generation_id` (the `gen-…` ID OR returns in completion responses). Returns model, provider, total cost, prompt/completion/reasoning tokens, latency, generation time, finish reason. Use when an agent needs to explain why a specific call cost what it did. Bypasses GET cache (one-shot inspection, never reused).
+- **`or_models`** — list the OpenRouter model catalog with current pricing per 1M tokens, context length, output modalities. Filter via `search`, `supported_parameters`, `output_modalities` (forwarded to OR).
+- **`or_model_get`** — full details for a single model id: description, context, max completion, modalities, tokenizer, supported parameters, pricing.
+
+### Tests
+- 53 → 61 unit tests (3 for generation, 5 for models).
+
 ## 0.4.0 — 2026-04-25
 
 ### Removed (design — interpretive logic out)
