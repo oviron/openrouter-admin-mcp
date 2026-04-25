@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>openrouter-admin-mcp — demo</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --accent: #7c5cff;
+    --tool: #2f6feb;
+    --good: #3fb950;
+    --warn: #d29922;
+    --bad: #f85149;
+    --code-bg: #1c2128;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); }
+  body {
+    font-family: -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    width: 1280px;
+    padding: 36px 48px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .title-row { display: flex; align-items: center; gap: 14px; }
+  .logo {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #7c5cff, #2f6feb);
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-size: 22px; font-weight: 700;
+  }
+  h1 { margin: 0; font-size: 26px; font-weight: 700; }
+  .tagline { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .badges { display: flex; gap: 8px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 12px;
+    font-size: 12px; font-weight: 600;
+    background: var(--panel); border: 1px solid var(--border);
+  }
+  .badge.npm { color: #cb3837; }
+  .badge.ok { color: var(--good); }
+
+  .chat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .turn {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .turn:last-child { border-bottom: none; }
+  .role {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .role .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .role.user .dot { background: var(--accent); }
+  .role.assistant .dot { background: var(--good); }
+  .role.tool .dot { background: var(--tool); }
+
+  .msg { font-size: 16px; }
+  .msg.user-text { color: var(--text); font-weight: 500; }
+
+  .tool-call {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin: 6px 0;
+  }
+  .tool-call .fn { color: var(--tool); font-weight: 600; }
+  .tool-call .args { color: #c9d1d9; }
+
+  table.usage {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 14px;
+    background: var(--code-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  table.usage th {
+    text-align: left;
+    padding: 10px 14px;
+    background: #21262d;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.usage td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.usage tr:last-child td { border-bottom: none; }
+  table.usage td:nth-child(2), table.usage td:nth-child(3) { text-align: right; }
+  .spike { color: var(--bad); font-weight: 700; }
+  .anomaly-line {
+    background: rgba(248,81,73,0.08);
+    border-left: 3px solid var(--bad);
+    padding: 10px 14px;
+    margin-top: 12px;
+    font-size: 14px;
+    border-radius: 0 6px 6px 0;
+  }
+  .anomaly-line strong { color: var(--bad); }
+
+  .answer { font-size: 16px; line-height: 1.6; color: var(--text); margin-bottom: 6px; }
+  .answer code {
+    background: var(--code-bg);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 14px;
+    color: #c9d1d9;
+  }
+  .ok-line {
+    background: rgba(63,185,80,0.08);
+    border-left: 3px solid var(--good);
+    padding: 10px 14px;
+    margin-top: 8px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
+    border-radius: 0 6px 6px 0;
+    color: #c9d1d9;
+  }
+  .ok-line strong { color: var(--good); }
+
+  .footer {
+    margin-top: 22px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .footer code {
+    background: var(--panel);
+    padding: 3px 9px;
+    border-radius: 5px;
+    color: var(--text);
+    font-family: ui-monospace, monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title-row">
+    <div class="logo">⚡</div>
+    <div>
+      <h1>openrouter-admin-mcp</h1>
+      <div class="tagline">Catch a $20/day OpenRouter cost burn before your invoice does.</div>
+    </div>
+  </div>
+  <div class="badges">
+    <span class="badge npm">npm v0.3.0</span>
+    <span class="badge ok">MCP Registry</span>
+  </div>
+</div>
+
+<div class="chat">
+
+  <!-- TURN 1: user asks -->
+  <div class="turn">
+    <div class="role user"><span class="dot"></span>You</div>
+    <div class="msg user-text">What's burning my OpenRouter budget today?</div>
+  </div>
+
+  <!-- TURN 2: tool call + result -->
+  <div class="turn">
+    <div class="role assistant"><span class="dot"></span>Claude</div>
+    <div class="tool-call">→ <span class="fn">or_overview</span> <span class="args">()</span></div>
+    <table class="usage">
+      <thead>
+        <tr><th>Model</th><th>Today</th><th>Requests</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>openai/gpt-5.1</td><td class="spike">$11.84</td><td class="spike">412</td></tr>
+        <tr><td>anthropic/claude-opus-4.7</td><td>$3.40</td><td>27</td></tr>
+        <tr><td>x-ai/grok-4.1-fast</td><td>$0.42</td><td>89</td></tr>
+        <tr><td>google/gemini-2.5-flash</td><td>$0.18</td><td>134</td></tr>
+        <tr><td style="color:var(--muted)">+ 3 more</td><td style="color:var(--muted)">$0.07</td><td style="color:var(--muted)">22</td></tr>
+      </tbody>
+    </table>
+    <div class="anomaly-line">
+      <strong>⚠️ gpt-5.1 burn is 3.7× your weekly average.</strong> One key (<code style="font-family:monospace">prod-bot</code>) is at $9.40/$10 daily limit — likely a runaway loop.
+    </div>
+  </div>
+
+  <!-- TURN 3: user asks for fix -->
+  <div class="turn">
+    <div class="role user"><span class="dot"></span>You</div>
+    <div class="msg user-text">Cap that key at $5/day, just in case.</div>
+  </div>
+
+  <!-- TURN 4: tool call + confirmation -->
+  <div class="turn">
+    <div class="role assistant"><span class="dot"></span>Claude</div>
+    <div class="tool-call">→ <span class="fn">or_key_update</span> <span class="args">(hash="prod-bot…", limit=5, limit_reset="daily")</span></div>
+    <div class="answer">Done. <code>prod-bot</code> now caps at <strong>$5/day</strong> with daily reset.</div>
+    <div class="ok-line">
+      <strong>✓ Updated</strong> <strong>prod-bot</strong> · Limit: $5 (daily) · usage today: $9.40 → will refuse new requests until 00:00 UTC reset.
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <code>npx -y openrouter-admin-mcp</code> &nbsp;·&nbsp; github.com/oviron/openrouter-admin-mcp
+</div>
+
+</body>
+</html>
