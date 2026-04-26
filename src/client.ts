@@ -15,6 +15,13 @@ export interface RequestOptions {
   body?: unknown;
   /** Skip in-session cache for this GET. Default false. */
   noCache?: boolean;
+  /**
+   * Skip auto-unwrap of `{data: ...}` envelope. Use when the response has
+   * meaningful top-level fields beyond `data` — e.g. POST /keys returns
+   * `{data: {...}, key: "sk-or-v1-..."}` and the secret is lost on unwrap.
+   * Default false.
+   */
+  noUnwrap?: boolean;
 }
 
 export interface ClientOptions {
@@ -91,7 +98,7 @@ export class OpenRouterClient {
       init.body = JSON.stringify(opts.body);
     }
 
-    const result = await this.fetchWithRetry<T>(url, init);
+    const result = await this.fetchWithRetry<T>(url, init, opts.noUnwrap === true);
 
     // Mutations on /keys invalidate cached lists.
     if (method !== "GET" && path.startsWith("/keys")) {
@@ -130,7 +137,7 @@ export class OpenRouterClient {
     return url;
   }
 
-  private async fetchWithRetry<T>(url: string, init: RequestInit): Promise<T> {
+  private async fetchWithRetry<T>(url: string, init: RequestInit, noUnwrap: boolean): Promise<T> {
     let attempt = 0;
     let lastError: OpenRouterError | null = null;
 
@@ -148,6 +155,7 @@ export class OpenRouterClient {
 
       if (res.ok) {
         if (
+          !noUnwrap &&
           payload &&
           typeof payload === "object" &&
           "data" in (payload as Record<string, unknown>)

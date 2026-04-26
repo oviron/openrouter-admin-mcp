@@ -153,7 +153,10 @@ describe("or_key_get", () => {
 import { handleKeyCreate, handleKeyDelete, handleKeyUpdate } from "../src/tools/keys.js";
 
 describe("or_key_create", () => {
-  it("posts name + limit and surfaces the one-time secret", async () => {
+  it("posts name + limit and surfaces the one-time secret (top-level key field)", async () => {
+    // OR's POST /keys returns `{data: {...}, key: "sk-or-v1-..."}` with the secret
+    // OUTSIDE the `data` envelope. v0.7.2 auto-unwrapped `data` and dropped the
+    // secret. Regression guard: mock must match the real shape.
     const { calls } = mockFetch([
       {
         status: 200,
@@ -162,9 +165,9 @@ describe("or_key_create", () => {
             hash: "newhash",
             name: "test",
             label: "sk-or-v1-...",
-            key: "sk-or-v1-FULL_SECRET",
             limit: 5,
           },
+          key: "sk-or-v1-FULL_SECRET",
         },
       },
     ]);
@@ -190,11 +193,11 @@ describe("or_key_create", () => {
             hash: "h",
             name: "OpenClaw 2",
             label: "sk-...",
-            key: "sk-or-v1-NEW",
             limit: 0.3,
             limit_reset: "daily",
             expires_at: "2026-12-31T00:00:00Z",
           },
+          key: "sk-or-v1-NEW",
         },
       },
     ]);

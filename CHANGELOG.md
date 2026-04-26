@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.3 — 2026-04-26
+
+### Fixed
+- **`or_key_create` was silently dropping the one-time secret.** OpenRouter's `POST /keys` response shape is `{data: {…}, key: "sk-or-v1-…"}` with the secret as a sibling of `data`, but the client's auto-unwrap returned `payload.data` and discarded the rest. The new key was created on OR but the secret was unrecoverable — every caller had to delete the key and recreate via `curl`. Real-world hit reported by user during a key rotation.
+- Added `RequestOptions.noUnwrap` (default false). When set, `client.request` returns the full payload as-is. `or_key_create` opts in and reads `data` + `key` separately.
+- Test mocks for `or_key_create` were nesting `key` inside `data` — wrong shape, so the bug never failed CI. Fixed both tests, plus added two new client-level tests: one that the noUnwrap envelope works, one that documents the default-unwrap trap.
+
+### Tests
+- 84 → 86 unit tests.
+
 ## 0.7.2 — 2026-04-25
 
 ### Fixed
