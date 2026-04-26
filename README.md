@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/openrouter-admin-mcp?color=cb3837&logo=npm&label=npm)](https://www.npmjs.com/package/openrouter-admin-mcp)
 [![npm downloads](https://img.shields.io/npm/dw/openrouter-admin-mcp?color=cb3837&logo=npm&label=downloads)](https://www.npmjs.com/package/openrouter-admin-mcp)
 [![CI](https://img.shields.io/github/actions/workflow/status/oviron/openrouter-admin-mcp/test.yml?branch=main&logo=github&label=ci)](https://github.com/oviron/openrouter-admin-mcp/actions/workflows/test.yml)
-[![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-7C3AED?logo=anthropic)](https://registry.modelcontextprotocol.io/v0/servers/io.github.oviron%2Fopenrouter-admin)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-7C3AED?logo=anthropic)](https://registry.modelcontextprotocol.io/v0/servers/io.github.oviron%2Fopenrouter-admin/versions)
 [![Node](https://img.shields.io/node/v/openrouter-admin-mcp?logo=node.js)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
