@@ -38,11 +38,20 @@ jobs:
       - run: npm run build
       # Trusted Publishing requires npm ≥11.5.1; use npx to avoid in-place
       # upgrade race that bricks the self-update.
-      - run: npx -y npm@latest publish --provenance --access public
+      # `|| true` on the duplicate-version case so a re-run after a registry
+      # bump (e.g. when only server.json changed) doesn't block Wave 3.
+      - run: |
+          if ! npx -y npm@latest publish --provenance --access public 2> /tmp/err; then
+            cat /tmp/err >&2
+            grep -q "previously published versions" /tmp/err || exit 1
+            echo "::notice::npm version already published — continuing to MCP Registry publish"
+          fi
 
-  # Wave 3 — publish metadata to the official MCP Registry via GitHub OIDC
+  # Wave 3 — publish metadata to the official MCP Registry via GitHub OIDC.
+  # Depends only on `verify` so it can be re-triggered standalone (e.g. when
+  # the npm tarball is already up but the MCP Registry still needs the bump).
   publish-mcp-registry:
-    needs: publish-npm
+    needs: verify
     runs-on: ubuntu-latest
     permissions:
       id-token: write
