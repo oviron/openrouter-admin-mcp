@@ -19,7 +19,13 @@ interface KeyEntry {
   updated_at: string;
 }
 
-interface CreateKeyResponse extends KeyEntry {
+/**
+ * POST /keys returns `{data: KeyEntry, key: "sk-or-v1-..."}` — secret on top level,
+ * outside the `data` envelope. We must request with `noUnwrap` and pull both pieces
+ * manually; otherwise the auto-unwrap drops the one-time secret on the floor.
+ */
+interface CreateKeyEnvelope {
+  data: KeyEntry;
   key?: string;
 }
 
@@ -85,16 +91,20 @@ export async function handleKeyCreate(
   args: z.infer<typeof createSchema>,
 ): Promise<string> {
   const body = createSchema.parse(args);
-  const r = await client.request<CreateKeyResponse>("POST", "/keys", { body });
-  const lines = [`Created key **${r.name}**`, `Hash: ${r.hash}`, `Label: ${r.label}`];
-  if (r.limit != null) {
-    const reset = r.limit_reset ? ` (resets ${r.limit_reset})` : "";
-    lines.push(`Limit: $${r.limit}${reset}`);
+  const env = await client.request<CreateKeyEnvelope>("POST", "/keys", {
+    body,
+    noUnwrap: true,
+  });
+  const k = env.data;
+  const lines = [`Created key **${k.name}**`, `Hash: ${k.hash}`, `Label: ${k.label}`];
+  if (k.limit != null) {
+    const reset = k.limit_reset ? ` (resets ${k.limit_reset})` : "";
+    lines.push(`Limit: $${k.limit}${reset}`);
   }
-  if (r.expires_at) lines.push(`Expires: ${r.expires_at}`);
-  if (r.key) {
+  if (k.expires_at) lines.push(`Expires: ${k.expires_at}`);
+  if (env.key) {
     lines.push("");
-    lines.push(`Secret: \`${r.key}\``);
+    lines.push(`Secret: \`${env.key}\``);
     lines.push("⚠️ This secret cannot be retrieved later — store it now.");
   }
   return lines.join("\n");

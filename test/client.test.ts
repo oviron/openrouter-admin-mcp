@@ -43,6 +43,45 @@ describe("OpenRouterClient", () => {
     );
   });
 
+  it("noUnwrap returns the full envelope so top-level fields survive", async () => {
+    // Real OR POST /keys response shape: secret is a sibling of `data`.
+    mockFetch([
+      {
+        status: 200,
+        body: {
+          data: { hash: "h", name: "test", label: "sk-or-v1-...", limit: 5 },
+          key: "sk-or-v1-FULL",
+        },
+      },
+    ]);
+    type Env = { data: { hash: string }; key: string };
+    const env = await client.request<Env>("POST", "/keys", {
+      body: { name: "test" },
+      noUnwrap: true,
+    });
+    expect(env.data.hash).toBe("h");
+    expect(env.key).toBe("sk-or-v1-FULL");
+  });
+
+  it("default unwrap drops top-level fields outside `data` (documents the trap)", async () => {
+    // Without noUnwrap the auto-unwrap returns ONLY `data` — sibling fields
+    // are lost. This is why or_key_create must opt out.
+    mockFetch([
+      {
+        status: 200,
+        body: {
+          data: { hash: "h" },
+          key: "sk-or-v1-LOST",
+        },
+      },
+    ]);
+    const r = await client.request<{ hash: string; key?: string }>("POST", "/keys", {
+      body: { name: "test" },
+    });
+    expect(r.hash).toBe("h");
+    expect(r.key).toBeUndefined();
+  });
+
   it("maps 401 to 'Invalid or expired Provisioning key'", async () => {
     mockFetch([
       { status: 401, body: { error: { message: "no" } } },
